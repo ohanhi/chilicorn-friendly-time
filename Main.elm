@@ -18,35 +18,59 @@ type alias Model = Int
 
 
 model : Model
-model = 9000
+model = 209
 
 
 view : Signal.Address Action -> Model -> RN.VTree
-view address count =
+view address cftime =
+  block "column"
+    [ block "row"
+      [ heading "Chilicorn Friendly Time"
+      ]
+    , block "column"
+      [ blockNoFlex "row"
+        [ chilicorn
+        , RN.text [Style.fontSize 64] Nothing (toString cftime)
+        ]
+      , footerText "grains"
+      ]
+    , block "column"
+      [ footerText "https://chilicorn.org"
+      ]
+    ]
+
+
+block direction =
   RN.view
-    [ Style.alignItems "center"
+    [ Style.flex 1
+    , Style.flexDirection direction
+    , Style.alignItems "center"
+    , Style.justifyContent "center"
     ]
-    [ RN.image
-      [ Style.height 64
-      , Style.width 64
-      , Style.marginBottom 30
-      ]
-      "https://raw.githubusercontent.com/futurice/spiceprogram/master/assets/img/logo/chilicorn_no_text-128.png"
-    , RN.text
-      [ Style.textAlign "center"
-      , Style.marginBottom 30
-      ]
-      Nothing
-      ("Counter: " ++ toString count)
-    , RN.view
-      [ Style.width 80
-      , Style.flexDirection "row"
-      , Style.justifyContent "space-between"
-      ]
-      [ button address Decrement "#d33" "-"
-      , button address Increment "#3d3" "+"
-      ]
+
+
+blockNoFlex direction =
+  RN.view
+    [ Style.flexDirection direction
+    , Style.alignItems "center"
+    , Style.justifyContent "center"
     ]
+
+
+footerText =
+  RN.text [ Style.fontSize 18 ] Nothing
+
+
+heading =
+  RN.text [ Style.fontSize 24 ] Nothing
+
+
+chilicorn =
+  RN.image
+    [ Style.height 64
+    , Style.width 64
+    ]
+    "https://raw.githubusercontent.com/futurice/spiceprogram/master/assets/img/logo/chilicorn_no_text-128.png"
 
 
 type Action = Increment | Decrement

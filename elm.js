@@ -8875,26 +8875,51 @@ Elm.Main.make = function (_elm) {
    var update = F2(function (action,model) {    var _p0 = action;if (_p0.ctor === "Increment") {    return model + 1;} else {    return model - 1;}});
    var Decrement = {ctor: "Decrement"};
    var Increment = {ctor: "Increment"};
-   var view = F2(function (address,count) {
-      return A2($ReactNative$ReactNative.view,
-      _U.list([$ReactNative$Style.alignItems("center")]),
-      _U.list([A2($ReactNative$ReactNative.image,
-              _U.list([$ReactNative$Style.height(64),$ReactNative$Style.width(64),$ReactNative$Style.marginBottom(30)]),
-              "https://raw.githubusercontent.com/futurice/spiceprogram/master/assets/img/logo/chilicorn_no_text-128.png")
-              ,A3($ReactNative$ReactNative.text,
-              _U.list([$ReactNative$Style.textAlign("center"),$ReactNative$Style.marginBottom(30)]),
-              $Maybe.Nothing,
-              A2($Basics._op["++"],"Counter: ",$Basics.toString(count)))
-              ,A2($ReactNative$ReactNative.view,
-              _U.list([$ReactNative$Style.width(80),$ReactNative$Style.flexDirection("row"),$ReactNative$Style.justifyContent("space-between")]),
-              _U.list([A4(button,address,Decrement,"#d33","-"),A4(button,address,Increment,"#3d3","+")]))]));
+   var chilicorn = A2($ReactNative$ReactNative.image,
+   _U.list([$ReactNative$Style.height(64),$ReactNative$Style.width(64)]),
+   "https://raw.githubusercontent.com/futurice/spiceprogram/master/assets/img/logo/chilicorn_no_text-128.png");
+   var heading = A2($ReactNative$ReactNative.text,_U.list([$ReactNative$Style.fontSize(24)]),$Maybe.Nothing);
+   var footerText = A2($ReactNative$ReactNative.text,_U.list([$ReactNative$Style.fontSize(18)]),$Maybe.Nothing);
+   var blockNoFlex = function (direction) {
+      return $ReactNative$ReactNative.view(_U.list([$ReactNative$Style.flexDirection(direction)
+                                                   ,$ReactNative$Style.alignItems("center")
+                                                   ,$ReactNative$Style.justifyContent("center")]));
+   };
+   var block = function (direction) {
+      return $ReactNative$ReactNative.view(_U.list([$ReactNative$Style.flex(1)
+                                                   ,$ReactNative$Style.flexDirection(direction)
+                                                   ,$ReactNative$Style.alignItems("center")
+                                                   ,$ReactNative$Style.justifyContent("center")]));
+   };
+   var view = F2(function (address,cftime) {
+      return A2(block,
+      "column",
+      _U.list([A2(block,"row",_U.list([heading("Chilicorn Friendly Time")]))
+              ,A2(block,
+              "column",
+              _U.list([A2(blockNoFlex,
+                      "row",
+                      _U.list([chilicorn,A3($ReactNative$ReactNative.text,_U.list([$ReactNative$Style.fontSize(64)]),$Maybe.Nothing,$Basics.toString(cftime))]))
+                      ,footerText("grains")]))
+              ,A2(block,"column",_U.list([footerText("https://chilicorn.org")]))]));
    });
-   var model = 9000;
+   var model = 209;
    var viewTree = Elm.Native.Port.make(_elm).outboundSignal("viewTree",
    function (v) {
       return v;
    },
    $ReactNative$NativeApp.start({model: model,view: view,update: update,init: init}));
-   return _elm.Main.values = {_op: _op,model: model,view: view,Increment: Increment,Decrement: Decrement,update: update,button: button};
+   return _elm.Main.values = {_op: _op
+                             ,model: model
+                             ,view: view
+                             ,block: block
+                             ,blockNoFlex: blockNoFlex
+                             ,footerText: footerText
+                             ,heading: heading
+                             ,chilicorn: chilicorn
+                             ,Increment: Increment
+                             ,Decrement: Decrement
+                             ,update: update
+                             ,button: button};
 };
 module.exports = Elm;
