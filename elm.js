@@ -8929,7 +8929,7 @@ Elm.Main.make = function (_elm) {
          if (_p0.ctor === "Just") {
                return A2(config.update,_p0._0,model);
             } else {
-               return _U.crashCase("Main",{start: {line: 227,column: 7},end: {line: 232,column: 52}},_p0)("This should never happen.");
+               return _U.crashCase("Main",{start: {line: 232,column: 7},end: {line: 237,column: 52}},_p0)("This should never happen.");
             }
       });
       var update = F2(function (action,model) {
@@ -8959,6 +8959,7 @@ Elm.Main.make = function (_elm) {
    "https://raw.githubusercontent.com/futurice/spiceprogram/master/assets/img/logo/chilicorn_no_text-128.png");
    var heading = A2($ReactNative$ReactNative.text,_U.list([$ReactNative$Style.fontSize(24)]),$Maybe.Nothing);
    var footerText = A2($ReactNative$ReactNative.text,_U.list([$ReactNative$Style.fontSize(18)]),$Maybe.Nothing);
+   var quoteText = A2($ReactNative$ReactNative.text,_U.list([$ReactNative$Style.fontSize(18),$ReactNative$Style.color("#999")]),$Maybe.Nothing);
    var blockNoFlex = function (direction) {
       return $ReactNative$ReactNative.view(_U.list([$ReactNative$Style.flexDirection(direction)
                                                    ,$ReactNative$Style.alignItems("center")
@@ -8982,7 +8983,7 @@ Elm.Main.make = function (_elm) {
               ,$ReactNative$Style.justifyContent("center")]),
       _U.list([A3($ReactNative$ReactNative.text,_U.list([$ReactNative$Style.fontSize(64)]),$Maybe.Nothing,grains)
               ,A3($ReactNative$ReactNative.text,
-              _U.list([$ReactNative$Style.fontSize(32),$ReactNative$Style.color("#999"),$ReactNative$Style.marginBottom(8)]),
+              _U.list([$ReactNative$Style.fontSize(32),$ReactNative$Style.color("#ccc"),$ReactNative$Style.marginBottom(8)]),
               $Maybe.Nothing,
               centigrains)]));
    };
@@ -8990,8 +8991,8 @@ Elm.Main.make = function (_elm) {
       return A2(block,
       "column",
       _U.list([A2(block,"row",_U.list([heading("Chilicorn Friendly Time")]))
-              ,A2(block,"column",_U.list([A2(blockNoFlex,"row",_U.list([chilicorn,showTime(model)])),footerText("grains")]))
-              ,A2(block,"column",_U.list([footerText("https://chilicorn.org")]))]));
+              ,A2(block,"column",_U.list([quoteText("“It\'s"),A2(blockNoFlex,"row",_U.list([chilicorn,showTime(model)])),quoteText("grains right now.”")]))
+              ,A2(block,"column",_U.list([footerText("by Futurice")]))]));
    });
    var model = {time: {ctor: "_Tuple2",_0: 0,_1: 0},resolved: false};
    var Model = F2(function (a,b) {    return {time: a,resolved: b};});
@@ -9008,7 +9009,7 @@ Elm.Main.make = function (_elm) {
       var grainsToday = $Basics.toFloat(secsToday) / secsInDay * grainsInDay;
       return toCftTime(grainsToday);
    };
-   var ticks = A2($Signal.map,$Debug.log("time"),$Signal.dropRepeats(A2($Signal.map,timeToCft,$Time.every($Time.second))));
+   var ticks = A2($Signal.map,$Debug.log("time"),$Signal.dropRepeats(A2($Signal.map,timeToCft,$Time.every(100 * $Time.millisecond))));
    var ticker = Elm.Native.Task.make(_elm).performSignal("ticker",
    A2($Signal.map,function (time) {    return A2($Signal.send,address,TimeChange(time));},ticks));
    var viewTree = Elm.Native.Port.make(_elm).outboundSignal("viewTree",function (v) {    return v;},start({model: model,view: view,update: update,init: init}));
@@ -9024,6 +9025,7 @@ Elm.Main.make = function (_elm) {
                              ,showTime: showTime
                              ,block: block
                              ,blockNoFlex: blockNoFlex
+                             ,quoteText: quoteText
                              ,footerText: footerText
                              ,heading: heading
                              ,chilicorn: chilicorn

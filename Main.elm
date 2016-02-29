@@ -18,7 +18,7 @@ port viewTree =
 
 ticks : Signal CftTime
 ticks =
-  Time.every Time.second
+  Time.every (100 * Time.millisecond)
   |> Signal.map timeToCft
   |> Signal.dropRepeats
   |> Signal.map (Debug.log "time")
@@ -88,14 +88,15 @@ view address model =
       [ heading "Chilicorn Friendly Time"
       ]
     , block "column"
-      [ blockNoFlex "row"
+      [ quoteText "“It's"
+      , blockNoFlex "row"
         [ chilicorn
         , showTime model
         ]
-      , footerText "grains"
+      , quoteText "grains right now.”"
       ]
     , block "column"
-      [ footerText "https://chilicorn.org"
+      [ footerText "by Futurice"
       ]
     ]
 
@@ -129,7 +130,7 @@ showTime model =
       [ RN.text [Style.fontSize 64] Nothing grains
       , RN.text
         [ Style.fontSize 32
-        , Style.color "#999"
+        , Style.color "#ccc"
         , Style.marginBottom 8
         ]
         Nothing centigrains
@@ -151,6 +152,10 @@ blockNoFlex direction =
     , Style.alignItems "center"
     , Style.justifyContent "center"
     ]
+
+
+quoteText =
+  RN.text [ Style.fontSize 18, Style.color "#999" ] Nothing
 
 
 footerText =
