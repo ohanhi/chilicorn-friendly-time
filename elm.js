@@ -3271,6 +3271,46 @@ Elm.Color.make = function (_elm) {
                               ,gray: gray
                               ,darkGray: darkGray};
 };
+Elm.Native.Date = {};
+Elm.Native.Date.make = function(localRuntime) {
+	localRuntime.Native = localRuntime.Native || {};
+	localRuntime.Native.Date = localRuntime.Native.Date || {};
+	if (localRuntime.Native.Date.values)
+	{
+		return localRuntime.Native.Date.values;
+	}
+
+	var Result = Elm.Result.make(localRuntime);
+
+	function readDate(str)
+	{
+		var date = new Date(str);
+		return isNaN(date.getTime())
+			? Result.Err('unable to parse \'' + str + '\' as a date')
+			: Result.Ok(date);
+	}
+
+	var dayTable = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+	var monthTable =
+		['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+		 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+
+	return localRuntime.Native.Date.values = {
+		read: readDate,
+		year: function(d) { return d.getFullYear(); },
+		month: function(d) { return { ctor: monthTable[d.getMonth()] }; },
+		day: function(d) { return d.getDate(); },
+		hour: function(d) { return d.getHours(); },
+		minute: function(d) { return d.getMinutes(); },
+		second: function(d) { return d.getSeconds(); },
+		millisecond: function(d) { return d.getMilliseconds(); },
+		toTime: function(d) { return d.getTime(); },
+		fromTime: function(t) { return new Date(t); },
+		dayOfWeek: function(d) { return { ctor: dayTable[d.getDay()] }; }
+	};
+};
+
 Elm.Native.Signal = {};
 
 Elm.Native.Signal.make = function(localRuntime) {
@@ -6673,6 +6713,76 @@ Elm.Time.make = function (_elm) {
                              ,delay: delay
                              ,since: since};
 };
+Elm.Date = Elm.Date || {};
+Elm.Date.make = function (_elm) {
+   "use strict";
+   _elm.Date = _elm.Date || {};
+   if (_elm.Date.values) return _elm.Date.values;
+   var _U = Elm.Native.Utils.make(_elm),$Native$Date = Elm.Native.Date.make(_elm),$Result = Elm.Result.make(_elm),$Time = Elm.Time.make(_elm);
+   var _op = {};
+   var millisecond = $Native$Date.millisecond;
+   var second = $Native$Date.second;
+   var minute = $Native$Date.minute;
+   var hour = $Native$Date.hour;
+   var dayOfWeek = $Native$Date.dayOfWeek;
+   var day = $Native$Date.day;
+   var month = $Native$Date.month;
+   var year = $Native$Date.year;
+   var fromTime = $Native$Date.fromTime;
+   var toTime = $Native$Date.toTime;
+   var fromString = $Native$Date.read;
+   var Dec = {ctor: "Dec"};
+   var Nov = {ctor: "Nov"};
+   var Oct = {ctor: "Oct"};
+   var Sep = {ctor: "Sep"};
+   var Aug = {ctor: "Aug"};
+   var Jul = {ctor: "Jul"};
+   var Jun = {ctor: "Jun"};
+   var May = {ctor: "May"};
+   var Apr = {ctor: "Apr"};
+   var Mar = {ctor: "Mar"};
+   var Feb = {ctor: "Feb"};
+   var Jan = {ctor: "Jan"};
+   var Sun = {ctor: "Sun"};
+   var Sat = {ctor: "Sat"};
+   var Fri = {ctor: "Fri"};
+   var Thu = {ctor: "Thu"};
+   var Wed = {ctor: "Wed"};
+   var Tue = {ctor: "Tue"};
+   var Mon = {ctor: "Mon"};
+   var Date = {ctor: "Date"};
+   return _elm.Date.values = {_op: _op
+                             ,fromString: fromString
+                             ,toTime: toTime
+                             ,fromTime: fromTime
+                             ,year: year
+                             ,month: month
+                             ,day: day
+                             ,dayOfWeek: dayOfWeek
+                             ,hour: hour
+                             ,minute: minute
+                             ,second: second
+                             ,millisecond: millisecond
+                             ,Jan: Jan
+                             ,Feb: Feb
+                             ,Mar: Mar
+                             ,Apr: Apr
+                             ,May: May
+                             ,Jun: Jun
+                             ,Jul: Jul
+                             ,Aug: Aug
+                             ,Sep: Sep
+                             ,Oct: Oct
+                             ,Nov: Nov
+                             ,Dec: Dec
+                             ,Mon: Mon
+                             ,Tue: Tue
+                             ,Wed: Wed
+                             ,Thu: Thu
+                             ,Fri: Fri
+                             ,Sat: Sat
+                             ,Sun: Sun};
+};
 Elm.Native.String = {};
 
 Elm.Native.String.make = function(localRuntime) {
@@ -8788,23 +8898,28 @@ Elm.ReactNative.ReactNative.make = function (_elm) {
    var view = F2(function (styles,children) {    return A3(VNode,"View",styles,children);});
    return _elm.ReactNative.ReactNative.values = {_op: _op,node: node,view: view,text: text,image: image,encode: encode,onPress: onPress};
 };
-Elm.ReactNative = Elm.ReactNative || {};
-Elm.ReactNative.NativeApp = Elm.ReactNative.NativeApp || {};
-Elm.ReactNative.NativeApp.make = function (_elm) {
+Elm.Main = Elm.Main || {};
+Elm.Main.make = function (_elm) {
    "use strict";
-   _elm.ReactNative = _elm.ReactNative || {};
-   _elm.ReactNative.NativeApp = _elm.ReactNative.NativeApp || {};
-   if (_elm.ReactNative.NativeApp.values) return _elm.ReactNative.NativeApp.values;
+   _elm.Main = _elm.Main || {};
+   if (_elm.Main.values) return _elm.Main.values;
    var _U = Elm.Native.Utils.make(_elm),
    $Basics = Elm.Basics.make(_elm),
+   $Date = Elm.Date.make(_elm),
    $Debug = Elm.Debug.make(_elm),
    $Json$Encode = Elm.Json.Encode.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
    $ReactNative$ReactNative = Elm.ReactNative.ReactNative.make(_elm),
+   $ReactNative$Style = Elm.ReactNative.Style.make(_elm),
    $Result = Elm.Result.make(_elm),
-   $Signal = Elm.Signal.make(_elm);
+   $Signal = Elm.Signal.make(_elm),
+   $String = Elm.String.make(_elm),
+   $Task = Elm.Task.make(_elm),
+   $Time = Elm.Time.make(_elm);
    var _op = {};
+   var actions = $Signal.mailbox($Maybe.Nothing);
+   var address = A2($Signal.forwardTo,actions.address,$Maybe.Just);
    var Config = F4(function (a,b,c,d) {    return {model: a,view: b,update: c,init: d};});
    var ConfigAction = function (a) {    return {ctor: "ConfigAction",_0: a};};
    var Init = {ctor: "Init"};
@@ -8814,7 +8929,7 @@ Elm.ReactNative.NativeApp.make = function (_elm) {
          if (_p0.ctor === "Just") {
                return A2(config.update,_p0._0,model);
             } else {
-               return _U.crashCase("ReactNative.NativeApp",{start: {line: 41,column: 7},end: {line: 46,column: 52}},_p0)("This should never happen.");
+               return _U.crashCase("Main",{start: {line: 227,column: 7},end: {line: 232,column: 52}},_p0)("This should never happen.");
             }
       });
       var update = F2(function (action,model) {
@@ -8825,56 +8940,20 @@ Elm.ReactNative.NativeApp.make = function (_elm) {
                return model;
             }
       });
-      var actions = $Signal.mailbox($Maybe.Nothing);
       var merged = $Signal.mergeMany(_U.list([A2($Signal.map,ConfigAction,actions.signal),A2($Signal.map,$Basics.always(Init),config.init)]));
       var model = A3($Signal.foldp,update,config.model,merged);
-      var address = A2($Signal.forwardTo,actions.address,$Maybe.Just);
       return A2($Signal.map,$ReactNative$ReactNative.encode,A2($Signal.map,config.view(address),model));
    };
-   return _elm.ReactNative.NativeApp.values = {_op: _op,start: start};
-};
-Elm.Main = Elm.Main || {};
-Elm.Main.make = function (_elm) {
-   "use strict";
-   _elm.Main = _elm.Main || {};
-   if (_elm.Main.values) return _elm.Main.values;
-   var _U = Elm.Native.Utils.make(_elm),
-   $Basics = Elm.Basics.make(_elm),
-   $Debug = Elm.Debug.make(_elm),
-   $Json$Encode = Elm.Json.Encode.make(_elm),
-   $List = Elm.List.make(_elm),
-   $Maybe = Elm.Maybe.make(_elm),
-   $ReactNative$NativeApp = Elm.ReactNative.NativeApp.make(_elm),
-   $ReactNative$ReactNative = Elm.ReactNative.ReactNative.make(_elm),
-   $ReactNative$Style = Elm.ReactNative.Style.make(_elm),
-   $Result = Elm.Result.make(_elm),
-   $Signal = Elm.Signal.make(_elm);
-   var _op = {};
    var init = Elm.Native.Port.make(_elm).inboundSignal("init",
    "()",
    function (v) {
       return typeof v === "object" && v instanceof Array ? {ctor: "_Tuple0"} : _U.badPort("an array",v);
    });
-   var button = F4(function (address,action,color,content) {
-      return A3($ReactNative$ReactNative.text,
-      _U.list([$ReactNative$Style.color("white")
-              ,$ReactNative$Style.textAlign("center")
-              ,$ReactNative$Style.backgroundColor(color)
-              ,$ReactNative$Style.paddingTop(5)
-              ,$ReactNative$Style.paddingBottom(5)
-              ,$ReactNative$Style.width(30)
-              ,$ReactNative$Style.fontWeight("bold")
-              ,$ReactNative$Style.shadowColor("#000")
-              ,$ReactNative$Style.shadowOpacity(0.25)
-              ,A2($ReactNative$Style.shadowOffset,1,1)
-              ,$ReactNative$Style.shadowRadius(5)
-              ,$ReactNative$Style.transform(_U.update($ReactNative$Style.defaultTransform,{rotate: $Maybe.Just("10deg")}))]),
-      $Maybe.Just(A2($ReactNative$ReactNative.onPress,address,action)),
-      content);
+   var update = F2(function (action,model) {
+      var newTime = function () {    var _p3 = action;return _p3._0;}();
+      return _U.update(model,{time: newTime,resolved: true});
    });
-   var update = F2(function (action,model) {    var _p0 = action;if (_p0.ctor === "Increment") {    return model + 1;} else {    return model - 1;}});
-   var Decrement = {ctor: "Decrement"};
-   var Increment = {ctor: "Increment"};
+   var TimeChange = function (a) {    return {ctor: "TimeChange",_0: a};};
    var chilicorn = A2($ReactNative$ReactNative.image,
    _U.list([$ReactNative$Style.height(64),$ReactNative$Style.width(64)]),
    "https://raw.githubusercontent.com/futurice/spiceprogram/master/assets/img/logo/chilicorn_no_text-128.png");
@@ -8891,35 +8970,70 @@ Elm.Main.make = function (_elm) {
                                                    ,$ReactNative$Style.alignItems("center")
                                                    ,$ReactNative$Style.justifyContent("center")]));
    };
-   var view = F2(function (address,cftime) {
+   var showTime = function (model) {
+      var centigrains = A2(F2(function (x,y) {    return A2($Basics._op["++"],x,y);}),
+      ".",
+      model.resolved ? A3($String.padLeft,2,_U.chr("0"),$Basics.toString($Basics.snd(model.time))) : "--");
+      var grains = model.resolved ? A3($String.padLeft,3,_U.chr("0"),$Basics.toString($Basics.fst(model.time))) : "---";
+      return A2($ReactNative$ReactNative.view,
+      _U.list([$ReactNative$Style.flex(1)
+              ,$ReactNative$Style.flexDirection("row")
+              ,$ReactNative$Style.alignItems("flex-end")
+              ,$ReactNative$Style.justifyContent("center")]),
+      _U.list([A3($ReactNative$ReactNative.text,_U.list([$ReactNative$Style.fontSize(64)]),$Maybe.Nothing,grains)
+              ,A3($ReactNative$ReactNative.text,
+              _U.list([$ReactNative$Style.fontSize(32),$ReactNative$Style.color("#999"),$ReactNative$Style.marginBottom(8)]),
+              $Maybe.Nothing,
+              centigrains)]));
+   };
+   var view = F2(function (address,model) {
       return A2(block,
       "column",
       _U.list([A2(block,"row",_U.list([heading("Chilicorn Friendly Time")]))
-              ,A2(block,
-              "column",
-              _U.list([A2(blockNoFlex,
-                      "row",
-                      _U.list([chilicorn,A3($ReactNative$ReactNative.text,_U.list([$ReactNative$Style.fontSize(64)]),$Maybe.Nothing,$Basics.toString(cftime))]))
-                      ,footerText("grains")]))
+              ,A2(block,"column",_U.list([A2(blockNoFlex,"row",_U.list([chilicorn,showTime(model)])),footerText("grains")]))
               ,A2(block,"column",_U.list([footerText("https://chilicorn.org")]))]));
    });
-   var model = 209;
-   var viewTree = Elm.Native.Port.make(_elm).outboundSignal("viewTree",
-   function (v) {
-      return v;
-   },
-   $ReactNative$NativeApp.start({model: model,view: view,update: update,init: init}));
+   var model = {time: {ctor: "_Tuple2",_0: 0,_1: 0},resolved: false};
+   var Model = F2(function (a,b) {    return {time: a,resolved: b};});
+   var toCftTime = function (grainsFloat) {
+      var grains = $Basics.floor(grainsFloat);
+      var centigrains = $Basics.floor(grainsFloat * 100) - grains * 100;
+      return {ctor: "_Tuple2",_0: grains,_1: centigrains};
+   };
+   var grainsInDay = 256.0;
+   var secsInDay = 60.0 * 60 * 24;
+   var timeToCft = function (time) {
+      var date = $Date.fromTime(time);
+      var secsToday = ($Date.millisecond(date) / 1000 | 0) + $Date.second(date) + $Date.minute(date) * 60 + $Date.hour(date) * 60 * 60;
+      var grainsToday = $Basics.toFloat(secsToday) / secsInDay * grainsInDay;
+      return toCftTime(grainsToday);
+   };
+   var ticks = A2($Signal.map,$Debug.log("time"),$Signal.dropRepeats(A2($Signal.map,timeToCft,$Time.every($Time.second))));
+   var ticker = Elm.Native.Task.make(_elm).performSignal("ticker",
+   A2($Signal.map,function (time) {    return A2($Signal.send,address,TimeChange(time));},ticks));
+   var viewTree = Elm.Native.Port.make(_elm).outboundSignal("viewTree",function (v) {    return v;},start({model: model,view: view,update: update,init: init}));
    return _elm.Main.values = {_op: _op
+                             ,ticks: ticks
+                             ,secsInDay: secsInDay
+                             ,grainsInDay: grainsInDay
+                             ,timeToCft: timeToCft
+                             ,toCftTime: toCftTime
+                             ,Model: Model
                              ,model: model
                              ,view: view
+                             ,showTime: showTime
                              ,block: block
                              ,blockNoFlex: blockNoFlex
                              ,footerText: footerText
                              ,heading: heading
                              ,chilicorn: chilicorn
-                             ,Increment: Increment
-                             ,Decrement: Decrement
+                             ,TimeChange: TimeChange
                              ,update: update
-                             ,button: button};
+                             ,Init: Init
+                             ,ConfigAction: ConfigAction
+                             ,Config: Config
+                             ,actions: actions
+                             ,address: address
+                             ,start: start};
 };
 module.exports = Elm;
