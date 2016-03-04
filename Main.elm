@@ -42,10 +42,12 @@ port ticker =
   |> Signal.map (\time -> Signal.send address (TimeChange time))
 
 
+secsInDay : Float
 secsInDay =
   60.0 * 60 * 24
 
 
+grainsInDay : Float
 grainsInDay =
   256.0
 
@@ -233,10 +235,12 @@ type alias Config model action =
   }
 
 
+actions : Signal.Mailbox (Maybe a)
 actions =
   Signal.mailbox Nothing
 
 
+address : Signal.Address a
 address =
   Signal.forwardTo actions.address Just
 
