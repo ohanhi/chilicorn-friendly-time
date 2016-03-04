@@ -13,7 +13,9 @@ var {
   Image,
 } = React;
 
-var program = Elm.worker(Elm.Main, { init: [] });
+var offset = (new Date()).getTimezoneOffset();
+
+var program = null;
 
 function vtreeToReactElement(vtree) {
   if (typeof vtree === 'string') {
@@ -43,11 +45,13 @@ function vtreeToReactElement(vtree) {
 function componentFactory() {
   return React.createClass({
     componentWillMount() {
+      program = Elm.worker(Elm.Main, { timeZoneOffset: offset });
+
       program.ports.viewTree.subscribe(vtree => {
         this.setState({vtree});
         Elm.Native.ReactNative.prepareResetHandlers();
       });
-      program.ports.init.send([]);
+      // program.ports.init.send([]);
     },
     getInitialState() {
       return {

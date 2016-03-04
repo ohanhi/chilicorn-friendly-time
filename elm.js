@@ -8920,16 +8920,15 @@ Elm.Main.make = function (_elm) {
    var _op = {};
    var actions = $Signal.mailbox($Maybe.Nothing);
    var address = A2($Signal.forwardTo,actions.address,$Maybe.Just);
-   var Config = F4(function (a,b,c,d) {    return {model: a,view: b,update: c,init: d};});
+   var Config = F3(function (a,b,c) {    return {model: a,view: b,update: c};});
    var ConfigAction = function (a) {    return {ctor: "ConfigAction",_0: a};};
-   var Init = {ctor: "Init"};
    var start = function (config) {
       var normalUpdate = F2(function (maybeAction,model) {
          var _p0 = maybeAction;
          if (_p0.ctor === "Just") {
                return A2(config.update,_p0._0,model);
             } else {
-               return _U.crashCase("Main",{start: {line: 232,column: 7},end: {line: 237,column: 52}},_p0)("This should never happen.");
+               return _U.crashCase("Main",{start: {line: 259,column: 7},end: {line: 264,column: 52}},_p0)("This should never happen.");
             }
       });
       var update = F2(function (action,model) {
@@ -8940,19 +8939,12 @@ Elm.Main.make = function (_elm) {
                return model;
             }
       });
-      var merged = $Signal.mergeMany(_U.list([A2($Signal.map,ConfigAction,actions.signal),A2($Signal.map,$Basics.always(Init),config.init)]));
+      var merged = A2($Signal.map,ConfigAction,actions.signal);
       var model = A3($Signal.foldp,update,config.model,merged);
       return A2($Signal.map,$ReactNative$ReactNative.encode,A2($Signal.map,config.view(address),model));
    };
-   var init = Elm.Native.Port.make(_elm).inboundSignal("init",
-   "()",
-   function (v) {
-      return typeof v === "object" && v instanceof Array ? {ctor: "_Tuple0"} : _U.badPort("an array",v);
-   });
-   var update = F2(function (action,model) {
-      var newTime = function () {    var _p3 = action;return _p3._0;}();
-      return _U.update(model,{time: newTime,resolved: true});
-   });
+   var Init = {ctor: "Init"};
+   var TimeZoneChange = function (a) {    return {ctor: "TimeZoneChange",_0: a};};
    var TimeChange = function (a) {    return {ctor: "TimeChange",_0: a};};
    var chilicorn = A2($ReactNative$ReactNative.image,
    _U.list([$ReactNative$Style.height(64),$ReactNative$Style.width(64)]),
@@ -8971,11 +8963,42 @@ Elm.Main.make = function (_elm) {
                                                    ,$ReactNative$Style.alignItems("center")
                                                    ,$ReactNative$Style.justifyContent("center")]));
    };
+   var grainsToString = F4(function (extractor,length,resolved,time) {
+      var _p3 = resolved;
+      if (_p3 === false) {
+            return A2($String.repeat,length,"-");
+         } else {
+            return A3($String.padLeft,length,_U.chr("0"),$Basics.toString(extractor(time)));
+         }
+   });
+   var update = F2(function (action,model) {
+      var _p4 = action;
+      if (_p4.ctor === "TimeChange") {
+            return _U.update(model,{time: _p4._0,timeResolved: true});
+         } else {
+            return _U.update(model,{timeZoneMinutes: _p4._0,timeZoneResolved: true});
+         }
+   });
+   var model = {time: 0,timeResolved: false,timeZoneMinutes: 0,timeZoneResolved: false};
+   var Model = F4(function (a,b,c,d) {    return {time: a,timeResolved: b,timeZoneResolved: c,timeZoneMinutes: d};});
+   var toCftTime = function (grainsFloat) {
+      var grains = $Basics.floor(grainsFloat);
+      var centigrains = $Basics.floor(grainsFloat * 100) - grains * 100;
+      return {ctor: "_Tuple2",_0: grains,_1: centigrains};
+   };
+   var grainsInDay = 256.0;
+   var secsInDay = 60.0 * 60 * 24;
+   var timeToCft = F2(function (time,offsetMinutes) {
+      var date = $Date.fromTime(time);
+      var secsToday = ($Date.millisecond(date) / 1000 | 0) + $Date.second(date) + (60 + offsetMinutes + $Date.minute(date)) * 60 + $Date.hour(date) * 60 * 60;
+      var grainsToday = $Basics.toFloat(secsToday) / secsInDay * grainsInDay;
+      return toCftTime(grainsToday);
+   });
    var showTime = function (model) {
-      var centigrains = A2(F2(function (x,y) {    return A2($Basics._op["++"],x,y);}),
-      ".",
-      model.resolved ? A3($String.padLeft,2,_U.chr("0"),$Basics.toString($Basics.snd(model.time))) : "--");
-      var grains = model.resolved ? A3($String.padLeft,3,_U.chr("0"),$Basics.toString($Basics.fst(model.time))) : "---";
+      var cftTime = A2(timeToCft,model.time,model.timeZoneMinutes);
+      var resolved = model.timeResolved && model.timeZoneResolved;
+      var grains = A4(grainsToString,$Basics.fst,3,resolved,cftTime);
+      var centigrains = A2(F2(function (x,y) {    return A2($Basics._op["++"],x,y);}),".",A4(grainsToString,$Basics.snd,2,resolved,cftTime));
       return A2($ReactNative$ReactNative.view,
       _U.list([$ReactNative$Style.flex(1)
               ,$ReactNative$Style.flexDirection("row")
@@ -8994,25 +9017,17 @@ Elm.Main.make = function (_elm) {
               ,A2(block,"column",_U.list([quoteText("“It\'s"),A2(blockNoFlex,"row",_U.list([chilicorn,showTime(model)])),quoteText("grains right now.”")]))
               ,A2(block,"column",_U.list([footerText("by Futurice")]))]));
    });
-   var model = {time: {ctor: "_Tuple2",_0: 0,_1: 0},resolved: false};
-   var Model = F2(function (a,b) {    return {time: a,resolved: b};});
-   var toCftTime = function (grainsFloat) {
-      var grains = $Basics.floor(grainsFloat);
-      var centigrains = $Basics.floor(grainsFloat * 100) - grains * 100;
-      return {ctor: "_Tuple2",_0: grains,_1: centigrains};
-   };
-   var grainsInDay = 256.0;
-   var secsInDay = 60.0 * 60 * 24;
-   var timeToCft = function (time) {
-      var date = $Date.fromTime(time);
-      var secsToday = ($Date.millisecond(date) / 1000 | 0) + $Date.second(date) + $Date.minute(date) * 60 + $Date.hour(date) * 60 * 60;
-      var grainsToday = $Basics.toFloat(secsToday) / secsInDay * grainsInDay;
-      return toCftTime(grainsToday);
-   };
-   var ticks = A2($Signal.map,$Debug.log("time"),$Signal.dropRepeats(A2($Signal.map,timeToCft,$Time.every(100 * $Time.millisecond))));
+   var ticks = A2($Signal.map,$Debug.log("time"),$Signal.dropRepeats($Time.every(100 * $Time.millisecond)));
    var ticker = Elm.Native.Task.make(_elm).performSignal("ticker",
    A2($Signal.map,function (time) {    return A2($Signal.send,address,TimeChange(time));},ticks));
-   var viewTree = Elm.Native.Port.make(_elm).outboundSignal("viewTree",function (v) {    return v;},start({model: model,view: view,update: update,init: init}));
+   var timeZoneOffset = Elm.Native.Port.make(_elm).inboundSignal("timeZoneOffset",
+   "Int",
+   function (v) {
+      return typeof v === "number" && isFinite(v) && Math.floor(v) === v ? v : _U.badPort("an integer",v);
+   });
+   var offsetter = Elm.Native.Task.make(_elm).performSignal("offsetter",
+   A2($Signal.map,function (offset) {    return A2($Signal.send,address,TimeZoneChange(offset));},timeZoneOffset));
+   var viewTree = Elm.Native.Port.make(_elm).outboundSignal("viewTree",function (v) {    return v;},start({model: model,view: view,update: update}));
    return _elm.Main.values = {_op: _op
                              ,ticks: ticks
                              ,secsInDay: secsInDay
@@ -9021,8 +9036,10 @@ Elm.Main.make = function (_elm) {
                              ,toCftTime: toCftTime
                              ,Model: Model
                              ,model: model
+                             ,update: update
                              ,view: view
                              ,showTime: showTime
+                             ,grainsToString: grainsToString
                              ,block: block
                              ,blockNoFlex: blockNoFlex
                              ,quoteText: quoteText
@@ -9030,7 +9047,7 @@ Elm.Main.make = function (_elm) {
                              ,heading: heading
                              ,chilicorn: chilicorn
                              ,TimeChange: TimeChange
-                             ,update: update
+                             ,TimeZoneChange: TimeZoneChange
                              ,Init: Init
                              ,ConfigAction: ConfigAction
                              ,Config: Config

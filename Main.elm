@@ -13,13 +13,25 @@ import ReactNative.Style as Style exposing ( defaultTransform )
 -- "main"
 port viewTree : Signal Json.Encode.Value
 port viewTree =
-  start { model = model, view = view, update = update, init = init }
+  start
+    { model = model
+    , view = view
+    , update = update
+    }
 
 
-ticks : Signal CftTime
+port timeZoneOffset : Signal Int
+
+
+port offsetter : Signal (Task x ())
+port offsetter =
+  timeZoneOffset
+  |> Signal.map (\offset -> Signal.send address (TimeZoneChange offset))
+
+
+ticks : Signal Time.Time
 ticks =
   Time.every (100 * Time.millisecond)
-  |> Signal.map timeToCft
   |> Signal.dropRepeats
   |> Signal.map (Debug.log "time")
 
@@ -33,18 +45,20 @@ port ticker =
 secsInDay =
   60.0 * 60 * 24
 
+
 grainsInDay =
   256.0
 
-timeToCft : Float -> (Int, Int)
-timeToCft time =
+
+timeToCft : Float -> Int -> CftTime
+timeToCft time offsetMinutes =
   let
     date =
       Date.fromTime time
     secsToday =
       (Date.millisecond date // 1000) +
       (Date.second date) +
-      (Date.minute date * 60) +
+      ((60 + offsetMinutes + Date.minute date) * 60) +
       (Date.hour date * 60 * 60)
     grainsToday =
       (toFloat secsToday) / secsInDay * grainsInDay
@@ -69,16 +83,35 @@ type alias CftTime =
 
 
 type alias Model =
-  { time: CftTime
-  , resolved: Bool
+  { time : Time.Time
+  , timeResolved : Bool
+  , timeZoneResolved : Bool
+  , timeZoneMinutes : Int
   }
 
 
 model : Model
 model =
-  { time = (0,0)
-  , resolved = False
+  { time = 0
+  , timeResolved = False
+  , timeZoneMinutes = 0
+  , timeZoneResolved = False
   }
+
+
+update : Action -> Model -> Model
+update action model =
+  case action of
+    TimeChange newTime ->
+      { model
+        | time = newTime
+        , timeResolved = True
+        }
+    TimeZoneChange offset ->
+      { model
+        | timeZoneMinutes = offset
+        , timeZoneResolved = True
+        }
 
 
 view : Signal.Address Action -> Model -> RN.VTree
@@ -101,24 +134,17 @@ view address model =
     ]
 
 
+showTime : Model -> RN.VTree
 showTime model =
   let
+    resolved =
+      model.timeResolved && model.timeZoneResolved
+    cftTime =
+      timeToCft model.time model.timeZoneMinutes
     grains =
-      if model.resolved
-        then
-          fst model.time
-          |> toString
-          |> String.padLeft 3 '0'
-        else
-          "---"
+      grainsToString fst 3 resolved cftTime
     centigrains =
-      (if model.resolved
-        then
-          snd model.time
-          |> toString
-          |> String.padLeft 2 '0'
-        else
-          "--")
+      grainsToString snd 2 resolved cftTime
       |> (++) "."
   in
     RN.view
@@ -137,6 +163,19 @@ showTime model =
       ]
 
 
+grainsToString : (CftTime -> Int) -> Int -> Bool -> CftTime -> String
+grainsToString extractor length resolved time =
+  case resolved of
+    False ->
+      String.repeat length "-"
+    True ->
+      time
+      |> extractor
+      |> toString
+      |> String.padLeft length '0'
+
+
+block : String -> List RN.VTree -> RN.VTree
 block direction =
   RN.view
     [ Style.flex 1
@@ -146,6 +185,7 @@ block direction =
     ]
 
 
+blockNoFlex : String -> List RN.VTree -> RN.VTree
 blockNoFlex direction =
   RN.view
     [ Style.flexDirection direction
@@ -154,18 +194,22 @@ blockNoFlex direction =
     ]
 
 
+quoteText : String -> RN.VTree
 quoteText =
   RN.text [ Style.fontSize 18, Style.color "#999" ] Nothing
 
 
+footerText : String -> RN.VTree
 footerText =
   RN.text [ Style.fontSize 18 ] Nothing
 
 
+heading : String -> RN.VTree
 heading =
   RN.text [ Style.fontSize 24 ] Nothing
 
 
+chilicorn : RN.VTree
 chilicorn =
   RN.image
     [ Style.height 64
@@ -174,22 +218,9 @@ chilicorn =
     "https://raw.githubusercontent.com/futurice/spiceprogram/master/assets/img/logo/chilicorn_no_text-128.png"
 
 
-type Action = TimeChange CftTime
-
-
-update : Action -> Model -> Model
-update action model =
-  let newTime =
-    case action of
-      TimeChange time -> time
-  in  { model
-        | time = newTime
-        , resolved = True
-        }
-
-
--- for the first vtree
-port init : Signal ()
+type Action
+  = TimeChange Time.Time
+  | TimeZoneChange Int
 
 
 type AppAction a = Init | ConfigAction a
@@ -199,7 +230,6 @@ type alias Config model action =
   { model : model
   , view : Signal.Address action -> model -> RN.VTree
   , update : action -> model -> model
-  , init : Signal ()
   }
 
 
@@ -215,10 +245,7 @@ start : Config model action -> Signal Json.Encode.Value
 start config =
   let
     merged =
-      Signal.mergeMany
-        [ Signal.map ConfigAction actions.signal
-        , Signal.map (always Init) config.init
-        ]
+      Signal.map ConfigAction actions.signal
 
     update action model =
       case action of
