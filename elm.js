@@ -8918,6 +8918,12 @@ Elm.Main.make = function (_elm) {
    $Task = Elm.Task.make(_elm),
    $Time = Elm.Time.make(_elm);
    var _op = {};
+   var timeZoneOffset = Elm.Native.Port.make(_elm).inboundSignal("timeZoneOffset",
+   "Int",
+   function (v) {
+      return typeof v === "number" && isFinite(v) && Math.floor(v) === v ? v : _U.badPort("an integer",v);
+   });
+   var ticks = $Signal.dropRepeats($Time.every(100 * $Time.millisecond));
    var actions = $Signal.mailbox($Maybe.Nothing);
    var address = A2($Signal.forwardTo,actions.address,$Maybe.Just);
    var Config = F3(function (a,b,c) {    return {model: a,view: b,update: c};});
@@ -8928,7 +8934,7 @@ Elm.Main.make = function (_elm) {
          if (_p0.ctor === "Just") {
                return A2(config.update,_p0._0,model);
             } else {
-               return _U.crashCase("Main",{start: {line: 259,column: 7},end: {line: 264,column: 52}},_p0)("This should never happen.");
+               return _U.crashCase("Main",{start: {line: 283,column: 7},end: {line: 288,column: 50}},_p0)("This should never happen.");
             }
       });
       var update = F2(function (action,model) {
@@ -8944,8 +8950,19 @@ Elm.Main.make = function (_elm) {
       return A2($Signal.map,$ReactNative$ReactNative.encode,A2($Signal.map,config.view(address),model));
    };
    var Init = {ctor: "Init"};
-   var TimeZoneChange = function (a) {    return {ctor: "TimeZoneChange",_0: a};};
-   var TimeChange = function (a) {    return {ctor: "TimeChange",_0: a};};
+   var toCftTime = function (grainsFloat) {
+      var grains = $Basics.floor(grainsFloat);
+      var centigrains = $Basics.floor(grainsFloat * 100) - grains * 100;
+      return {ctor: "_Tuple2",_0: grains,_1: centigrains};
+   };
+   var grainsToString = F4(function (extractor,length,resolved,time) {
+      var _p3 = resolved;
+      if (_p3 === false) {
+            return A2($String.repeat,length,"-");
+         } else {
+            return A3($String.padLeft,length,_U.chr("0"),$Basics.toString(extractor(time)));
+         }
+   });
    var chilicorn = A2($ReactNative$ReactNative.image,
    _U.list([$ReactNative$Style.height(64),$ReactNative$Style.width(64)]),
    "https://raw.githubusercontent.com/futurice/spiceprogram/master/assets/img/logo/chilicorn_no_text-128.png");
@@ -8963,14 +8980,6 @@ Elm.Main.make = function (_elm) {
                                                    ,$ReactNative$Style.alignItems("center")
                                                    ,$ReactNative$Style.justifyContent("center")]));
    };
-   var grainsToString = F4(function (extractor,length,resolved,time) {
-      var _p3 = resolved;
-      if (_p3 === false) {
-            return A2($String.repeat,length,"-");
-         } else {
-            return A3($String.padLeft,length,_U.chr("0"),$Basics.toString(extractor(time)));
-         }
-   });
    var update = F2(function (action,model) {
       var _p4 = action;
       if (_p4.ctor === "TimeChange") {
@@ -8979,13 +8988,14 @@ Elm.Main.make = function (_elm) {
             return _U.update(model,{timeZoneMinutes: _p4._0,timeZoneResolved: true});
          }
    });
+   var TimeZoneChange = function (a) {    return {ctor: "TimeZoneChange",_0: a};};
+   var offsetter = Elm.Native.Task.make(_elm).performSignal("offsetter",
+   A2($Signal.map,function (offset) {    return A2($Signal.send,address,TimeZoneChange(offset));},timeZoneOffset));
+   var TimeChange = function (a) {    return {ctor: "TimeChange",_0: a};};
+   var ticker = Elm.Native.Task.make(_elm).performSignal("ticker",
+   A2($Signal.map,function (time) {    return A2($Signal.send,address,TimeChange(time));},ticks));
    var model = {time: 0,timeResolved: false,timeZoneMinutes: 0,timeZoneResolved: false};
    var Model = F4(function (a,b,c,d) {    return {time: a,timeResolved: b,timeZoneResolved: c,timeZoneMinutes: d};});
-   var toCftTime = function (grainsFloat) {
-      var grains = $Basics.floor(grainsFloat);
-      var centigrains = $Basics.floor(grainsFloat * 100) - grains * 100;
-      return {ctor: "_Tuple2",_0: grains,_1: centigrains};
-   };
    var grainsInDay = 256.0;
    var secsInDay = 60.0 * 60 * 24;
    var timeToCft = F2(function (time,offsetMinutes) {
@@ -9017,42 +9027,32 @@ Elm.Main.make = function (_elm) {
               ,A2(block,"column",_U.list([quoteText("“It\'s"),A2(blockNoFlex,"row",_U.list([chilicorn,showTime(model)])),quoteText("grains right now.”")]))
               ,A2(block,"column",_U.list([footerText("by Futurice")]))]));
    });
-   var ticks = A2($Signal.map,$Debug.log("time"),$Signal.dropRepeats($Time.every(100 * $Time.millisecond)));
-   var ticker = Elm.Native.Task.make(_elm).performSignal("ticker",
-   A2($Signal.map,function (time) {    return A2($Signal.send,address,TimeChange(time));},ticks));
-   var timeZoneOffset = Elm.Native.Port.make(_elm).inboundSignal("timeZoneOffset",
-   "Int",
-   function (v) {
-      return typeof v === "number" && isFinite(v) && Math.floor(v) === v ? v : _U.badPort("an integer",v);
-   });
-   var offsetter = Elm.Native.Task.make(_elm).performSignal("offsetter",
-   A2($Signal.map,function (offset) {    return A2($Signal.send,address,TimeZoneChange(offset));},timeZoneOffset));
    var viewTree = Elm.Native.Port.make(_elm).outboundSignal("viewTree",function (v) {    return v;},start({model: model,view: view,update: update}));
    return _elm.Main.values = {_op: _op
-                             ,ticks: ticks
                              ,secsInDay: secsInDay
                              ,grainsInDay: grainsInDay
-                             ,timeToCft: timeToCft
-                             ,toCftTime: toCftTime
                              ,Model: Model
                              ,model: model
+                             ,TimeChange: TimeChange
+                             ,TimeZoneChange: TimeZoneChange
                              ,update: update
                              ,view: view
                              ,showTime: showTime
-                             ,grainsToString: grainsToString
                              ,block: block
                              ,blockNoFlex: blockNoFlex
                              ,quoteText: quoteText
                              ,footerText: footerText
                              ,heading: heading
                              ,chilicorn: chilicorn
-                             ,TimeChange: TimeChange
-                             ,TimeZoneChange: TimeZoneChange
+                             ,grainsToString: grainsToString
+                             ,timeToCft: timeToCft
+                             ,toCftTime: toCftTime
                              ,Init: Init
                              ,ConfigAction: ConfigAction
                              ,Config: Config
                              ,actions: actions
                              ,address: address
-                             ,start: start};
+                             ,start: start
+                             ,ticks: ticks};
 };
 module.exports = Elm;

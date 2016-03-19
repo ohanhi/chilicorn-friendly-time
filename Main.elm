@@ -1,4 +1,4 @@
-module Main where
+module Main (..) where
 
 import Task exposing (Task)
 import Time
@@ -7,39 +7,10 @@ import String
 import Signal
 import Json.Encode
 import ReactNative.ReactNative as RN
-import ReactNative.Style as Style exposing ( defaultTransform )
+import ReactNative.Style as Style exposing (defaultTransform)
 
 
--- "main"
-port viewTree : Signal Json.Encode.Value
-port viewTree =
-  start
-    { model = model
-    , view = view
-    , update = update
-    }
-
-
-port timeZoneOffset : Signal Int
-
-
-port offsetter : Signal (Task x ())
-port offsetter =
-  timeZoneOffset
-  |> Signal.map (\offset -> Signal.send address (TimeZoneChange offset))
-
-
-ticks : Signal Time.Time
-ticks =
-  Time.every (100 * Time.millisecond)
-  |> Signal.dropRepeats
-  |> Signal.map (Debug.log "time")
-
-
-port ticker : Signal (Task x ())
-port ticker =
-  ticks
-  |> Signal.map (\time -> Signal.send address (TimeChange time))
+-- CONSTANTS
 
 
 secsInDay : Float
@@ -52,36 +23,21 @@ grainsInDay =
   256.0
 
 
-timeToCft : Float -> Int -> CftTime
-timeToCft time offsetMinutes =
-  let
-    date =
-      Date.fromTime time
-    secsToday =
-      (Date.millisecond date // 1000) +
-      (Date.second date) +
-      ((60 + offsetMinutes + Date.minute date) * 60) +
-      (Date.hour date * 60 * 60)
-    grainsToday =
-      (toFloat secsToday) / secsInDay * grainsInDay
-  in
-    grainsToday
-    |> toCftTime
+
+-- "main"
 
 
-toCftTime : Float -> CftTime
-toCftTime grainsFloat =
-  let
-    grains =
-      floor grainsFloat
-    centigrains =
-      (floor (grainsFloat * 100)) - (grains * 100)
-  in
-    (grains, centigrains)
+port viewTree : Signal Json.Encode.Value
+port viewTree =
+  start
+    { model = model
+    , view = view
+    , update = update
+    }
 
 
-type alias CftTime =
-  (Int, Int)
+
+-- MODEL
 
 
 type alias Model =
@@ -101,6 +57,15 @@ model =
   }
 
 
+
+-- UPDATE
+
+
+type Action
+  = TimeChange Time.Time
+  | TimeZoneChange Int
+
+
 update : Action -> Model -> Model
 update action model =
   case action of
@@ -108,31 +73,41 @@ update action model =
       { model
         | time = newTime
         , timeResolved = True
-        }
+      }
+
     TimeZoneChange offset ->
       { model
         | timeZoneMinutes = offset
         , timeZoneResolved = True
-        }
+      }
+
+
+
+-- VIEW
 
 
 view : Signal.Address Action -> Model -> RN.VTree
 view address model =
-  block "column"
-    [ block "row"
-      [ heading "Chilicorn Friendly Time"
-      ]
-    , block "column"
-      [ quoteText "“It's"
-      , blockNoFlex "row"
-        [ chilicorn
-        , showTime model
+  block
+    "column"
+    [ block
+        "row"
+        [ heading "Chilicorn Friendly Time"
         ]
-      , quoteText "grains right now.”"
-      ]
-    , block "column"
-      [ footerText "by Futurice"
-      ]
+    , block
+        "column"
+        [ quoteText "“It's"
+        , blockNoFlex
+            "row"
+            [ chilicorn
+            , showTime model
+            ]
+        , quoteText "grains right now.”"
+        ]
+    , block
+        "column"
+        [ footerText "by Futurice"
+        ]
     ]
 
 
@@ -141,13 +116,16 @@ showTime model =
   let
     resolved =
       model.timeResolved && model.timeZoneResolved
+
     cftTime =
       timeToCft model.time model.timeZoneMinutes
+
     grains =
       grainsToString fst 3 resolved cftTime
+
     centigrains =
       grainsToString snd 2 resolved cftTime
-      |> (++) "."
+        |> (++) "."
   in
     RN.view
       [ Style.flex 1
@@ -155,26 +133,15 @@ showTime model =
       , Style.alignItems "flex-end"
       , Style.justifyContent "center"
       ]
-      [ RN.text [Style.fontSize 64] Nothing grains
+      [ RN.text [ Style.fontSize 64 ] Nothing grains
       , RN.text
-        [ Style.fontSize 32
-        , Style.color "#ccc"
-        , Style.marginBottom 8
-        ]
-        Nothing centigrains
+          [ Style.fontSize 32
+          , Style.color "#ccc"
+          , Style.marginBottom 8
+          ]
+          Nothing
+          centigrains
       ]
-
-
-grainsToString : (CftTime -> Int) -> Int -> Bool -> CftTime -> String
-grainsToString extractor length resolved time =
-  case resolved of
-    False ->
-      String.repeat length "-"
-    True ->
-      time
-      |> extractor
-      |> toString
-      |> String.padLeft length '0'
 
 
 block : String -> List RN.VTree -> RN.VTree
@@ -220,12 +187,65 @@ chilicorn =
     "https://raw.githubusercontent.com/futurice/spiceprogram/master/assets/img/logo/chilicorn_no_text-128.png"
 
 
-type Action
-  = TimeChange Time.Time
-  | TimeZoneChange Int
+
+-- CONVERSIONS
 
 
-type AppAction a = Init | ConfigAction a
+type alias CftTime =
+  ( Int, Int )
+
+
+grainsToString : (CftTime -> Int) -> Int -> Bool -> CftTime -> String
+grainsToString extractor length resolved time =
+  case resolved of
+    False ->
+      String.repeat length "-"
+
+    True ->
+      time
+        |> extractor
+        |> toString
+        |> String.padLeft length '0'
+
+
+timeToCft : Float -> Int -> CftTime
+timeToCft time offsetMinutes =
+  let
+    date =
+      Date.fromTime time
+
+    secsToday =
+      (Date.millisecond date // 1000)
+        + (Date.second date)
+        + ((60 + offsetMinutes + Date.minute date) * 60)
+        + (Date.hour date * 60 * 60)
+
+    grainsToday =
+      (toFloat secsToday) / secsInDay * grainsInDay
+  in
+    grainsToday
+      |> toCftTime
+
+
+toCftTime : Float -> CftTime
+toCftTime grainsFloat =
+  let
+    grains =
+      floor grainsFloat
+
+    centigrains =
+      (floor (grainsFloat * 100)) - (grains * 100)
+  in
+    ( grains, centigrains )
+
+
+
+-- StartApp-like thingy
+
+
+type AppAction a
+  = Init
+  | ConfigAction a
 
 
 type alias Config model action =
@@ -262,14 +282,37 @@ start config =
     normalUpdate maybeAction model =
       case maybeAction of
         Just action ->
-            config.update action model
+          config.update action model
 
         Nothing ->
-            Debug.crash "This should never happen."
+          Debug.crash "This should never happen."
 
     model =
       Signal.foldp update config.model merged
   in
     model
-    |> Signal.map (config.view address)
-    |> Signal.map RN.encode
+      |> Signal.map (config.view address)
+      |> Signal.map RN.encode
+
+
+
+-- PORTS & SIGNALS
+
+
+ticks : Signal Time.Time
+ticks =
+  Time.every (100 * Time.millisecond)
+    |> Signal.dropRepeats
+
+
+port timeZoneOffset : Signal Int
+port offsetter : Signal (Task x ())
+port offsetter =
+  timeZoneOffset
+    |> Signal.map (\offset -> Signal.send address (TimeZoneChange offset))
+
+
+port ticker : Signal (Task x ())
+port ticker =
+  ticks
+    |> Signal.map (\time -> Signal.send address (TimeChange time))
